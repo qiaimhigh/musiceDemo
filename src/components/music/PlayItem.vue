@@ -66,11 +66,14 @@ let timer = null;
 function Current(){
   timer = setInterval(()=>{
     store.commit('getCurrentTime',audio.value.currentTime)
-  },800)
+  },100)
 }
-let audio = ref(null);
+
+let audio = ref('audio');
 function playMusic() {
   if (audio.value.paused) {
+    console.log('-=-=-==-=-=');
+    store.commit('getTotalTime',audio.value.duration)
     audio.value.play();
     Current();
     changePlay();
@@ -80,22 +83,29 @@ function playMusic() {
     changePlay();
   }
 }
+
 watch(
   [playingIndex, playList],
   () => {
     audio.value.autoplay = true;
-  },
-  { deep: true }
+    console.log([audio.value.duration]);
+    
+    Current();
+    
+    store.commit('getTotalTime',parseInt(audio.value.duration))
+  } 
 );
 // 点击弹出歌词页
 function alertMusic() {
   changeMusicShow();
 }
 onMounted(() => {
- store.dispatch('getMusicLyric',playList.value[0].id)
+  console.log([audio.value]);
+  store.commit('getTotalTime',audio.value.duration)
+  store.dispatch('getMusicLyric',playList.value[playingIndex.value].id)
 });
 onUpdated(() => {
-  store.dispatch('getMusicLyric',playList.value[0].id)
+  store.dispatch('getMusicLyric',playList.value[playingIndex.value].id)
 })
 
 

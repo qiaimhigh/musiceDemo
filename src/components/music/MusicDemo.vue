@@ -16,7 +16,6 @@
             <span
               v-for="(item, index) in playList[playingIndex].ar"
               :key="index"
-             
             >
               {{ item.name }}
             </span>
@@ -27,17 +26,34 @@
         <use xlink:href="#icon-fenxiang"></use>
       </svg>
     </div>
-    <div class="lyric">
-      <p v-for="item in musicLyric"   :class="{p_active:(currentTime < item.pre && currentTime >= item.time)}" :key="item">{{item.lrc}}</p>
+    <div class="lyric" ref="lyricBox" v-show="isMShow">
+      <p
+        v-for="item in musicLyric"
+        :class="{
+          p_active:
+            parseInt(currentTime) < parseInt(item.pre) &&
+            parseInt(currentTime) >= parseInt(item.time),
+        }"
+        :key="item"
+      >
+        {{ item.lrc }}
+      </p>
     </div>
-    <div class="middle" v-show="false">
+    <div class="middle" v-show="!isMShow">
       <img src="../../../public/img/disc_default.png" alt="" class="bg" />
-      <img :src="playList[playingIndex].al.picUrl" alt="" class="mimg" :class="{ img_active: isPlay , img_paused:!isPlay }"/>
       <img
+        @click="ChangeIsShow"
+        :src="playList[playingIndex].al.picUrl"
+        alt=""
+        class="mimg"
+        :class="{ img_active: isPlay, img_paused: !isPlay }"
+      />
+      <img
+        @click="ChangeIsShow"
         src="../../../public/img/needle-ab.png"
         alt=""
         class="zhen"
-        :class="{ zhen_active :isPlay }"
+        :class="{ zhen_active: isPlay }"
       />
     </div>
     <div class="bottom">
@@ -60,12 +76,7 @@
         </svg>
       </div>
       <div class="bMiddle">
-        <van-progress
-          :percentage="50"
-          stroke-width="8"
-          :show-pivot="false"
-          :inactive="true"
-        />
+        <input type="range" min="0" :max="totalTime*1000" v-model="currentTime" step="0.5">
       </div>
       <div class="footer">
         <svg class="icon" aria-hidden="true">
@@ -105,46 +116,78 @@
 <script setup>
 import "vue3-marquee/dist/style.css";
 import { useStore, mapState } from "vuex";
-import { computed, defineProps, onMounted} from "vue";
+import { computed, defineProps, onMounted, ref, watch } from "vue";
 let store = useStore();
 let musicList = {};
-let musicData = mapState(["playList", "playingIndex","lyric","currentTime"]);
+let musicData = mapState(["playList", "playingIndex", "lyric", "currentTime","totalTime"]);
 Object.keys(musicData).forEach((fnKey) => {
   const fn = musicData[fnKey].bind({ $store: store });
   musicList[fnKey] = computed(fn);
 });
-let changeMusicShow = () => store.commit("changeMusicShow");
-let { playList, playingIndex,lyric,currentTime } = musicList;
+let isMShow = ref(false);
+function ChangeIsShow() {
+  console.log("sdaasda");
+  isMShow.value = true;
+}
+let changeMusicShow = () => {
+  store.commit("changeMusicShow");
+  isMShow.value = false;
+};
+let { playList, playingIndex, lyric, currentTime,totalTime } = musicList;
 function changeMusic(index) {
   store.commit("changeMusic", index);
 }
 // 父传子
-defineProps(["playMusic", "isPlay"]);
-let musicLyric = computed(()=> {
-  let arr = lyric.value.split(/[(\r\n)\r\n]+/).map((item)=>{
-    let min = item.slice(1,3);
-    let sec = item.slice(4,6);
-    let ms = item.slice(7,10);
-    let lrc = item.slice(11,item.length)
-    if(isNaN(ms)){
-      ms = item.slice(7,9);
-      lrc = item.slice(10,item.length)
+let props = defineProps(["playMusic", "isPlay"]);
+let musicLyric = computed(() => {
+  let arr = lyric.value.split(/[(\r\n)\r\n]+/).map((item) => {
+    let min = item.slice(1, 3);
+    let sec = item.slice(4, 6);
+    let ms = item.slice(7, 10);
+    let lrc = item.slice(11, item.length);
+    if (isNaN(ms)) {
+      ms = item.slice(7, 9);
+      lrc = item.slice(10, item.length);
     }
-    let time = parseInt(min)*60*1000 + parseInt(sec)*1000 + parseInt(ms);
-    return {min,sec,ms,lrc,time};
+    let time = parseInt(min) * 60 * 1000 + parseInt(sec) * 1000 + parseInt(ms);
+    return { min, sec, ms, lrc, time };
   });
-  arr.forEach((item,i)=>{
-    console.log(item);
-    if(i === arr.length-1){
-      item.pre = 0;
-    }else{
-      item.pre = arr[i+1].time
+  arr.forEach((item, i) => {
+    if (i === arr.length - 1 || isNaN(arr[i].time)) {
+      item.pre = 100000;
+    } else {
+      item.pre = arr[i + 1].time;
     }
-  })
+  });
   return arr;
-})
-onMounted(()=>{
-})
+});
+let lyricBox = ref('lyricBox');
+  watch(currentTime, (newValue) => {
+    console.log(currentTime.value);
+    // console.log([lyricBox.value]);
+    let p = document.querySelector("p.p_active");
+    if (p && p.offsetTop && p.offsetTop > 300) {
+      // console.log(lyricBox.value.offsetTop);
+      lyricBox.value.scrollTop = p.offsetTop - 300;
+    }
+    console.log(newValue+'==='+parseInt(totalTime.value)*1000);
+    if(newValue >= Math.floor(totalTime.value)*1000){ 
+      if(playingIndex.value === playList.value.length-1){
+        store.commit("changeMusic",-(playList.value.length-1))
+        props.playMusic()
+      }else{
+        store.commit("changeMusic",1)
+      }
+    }
+  });
+onMounted(() => {
+});
+
+// Object.defineProperty([lyricBox.value],'offsetTop',{
+//   value: 300,
+//   writable: true
+// })
+// console.log([lyricBox.value]);
 </script>
 
 <style lang="less">
@@ -201,17 +244,17 @@ onMounted(()=>{
       border-radius: 50%;
       animation: rotate_z 10s linear infinite;
     }
-    .img_active{
+    .img_active {
       animation-play-state: running;
     }
-    .img_paused{
+    .img_paused {
       animation-play-state: paused;
     }
     @keyframes rotate_z {
-      0%{
+      0% {
         transform: rotateZ(0deg);
       }
-      100%{
+      100% {
         transform: rotateZ(360deg);
       }
     }
@@ -255,8 +298,15 @@ onMounted(()=>{
         fill: rgb(97, 94, 94);
       }
     }
+    .bMiddle{
+      padding: 0 .1rem;
+      input{
+        width: 100%;
+        height: .1rem;
+      }
+    }
   }
-  .lyric{
+  .lyric {
     margin-top: 0.2rem;
     width: 100vw;
     height: 9rem;
@@ -265,12 +315,13 @@ onMounted(()=>{
     align-items: center;
     color: #e2d8d8;
     overflow: scroll;
-    p{
-      font-size: .32rem;
-      margin-bottom: .2rem;
+    p {
+      font-size: 0.32rem;
+      margin-bottom: 0.4rem;
+      text-align: center;
     }
-    .p_active{
-      font-size: .42rem;
+    .p_active {
+      font-size: 0.42rem;
       color: white;
     }
   }

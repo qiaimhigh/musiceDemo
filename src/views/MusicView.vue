@@ -2,6 +2,7 @@
     <div>
         <top-nav :playList="data.playlist"></top-nav>
         <list-item :length="length" :itemList="itemList" :subscribedCount="data.playlist.subscribedCount"></list-item>
+        <PlayItem></PlayItem>
     </div>
 </template>
 <script setup>
@@ -10,6 +11,7 @@ import ListItem from '@/components/music/ListItem.vue';
 import { useRoute } from 'vue-router';
 import {onMounted,reactive,ref} from 'vue'
 import { getMusicList,getMusicLists } from '@/axios/music'
+import PlayItem from '@/components/music/PlayItem.vue';
 let route = useRoute();
 let data = reactive({
     playlist:{

@@ -4,6 +4,7 @@
     <swiper-box></swiper-box>
     <inf-box></inf-box>
     <music-list></music-list>
+    <PlayItem></PlayItem>
   </div>
 </template>
 
@@ -12,4 +13,5 @@ import TopNav from '@/components/home/TopNav.vue'
 import SwiperBox from '@/components/home/SwiperBox.vue'
 import InfBox from '@/components/home/InfBox.vue';
 import MusicList from '@/components/home/MusicList.vue'
+import PlayItem from '@/components/music/PlayItem.vue';
 </script>

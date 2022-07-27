@@ -5,10 +5,9 @@
     </svg> -->
   </nav>
   <router-view></router-view>
-  <play-item></play-item>
 </template>
 <script setup>
-import PlayItem from './components/music/PlayItem.vue';
+
 </script>
 <style>
 *{
